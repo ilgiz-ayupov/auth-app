@@ -5,6 +5,7 @@ import (
 
 	"github.com/ilgiz-ayupov/auth-app"
 	"github.com/ilgiz-ayupov/auth-app/pkg/handler"
+	"github.com/ilgiz-ayupov/auth-app/pkg/service"
 	"github.com/spf13/viper"
 )
 
@@ -13,7 +14,8 @@ func main() {
 		log.Fatalf("error initialization config: %s", err.Error())
 	}
 
-	handler := new(handler.Handler)
+	services := service.InitService()
+	handler := handler.InitHandler(services)
 	handler.InitRoutes()
 
 	server := new(auth.Server)
