@@ -5,16 +5,29 @@ import (
 
 	"github.com/ilgiz-ayupov/auth-app"
 	"github.com/ilgiz-ayupov/auth-app/pkg/handler"
+	"github.com/ilgiz-ayupov/auth-app/pkg/repository"
 	"github.com/ilgiz-ayupov/auth-app/pkg/service"
 	"github.com/spf13/viper"
 )
 
 func main() {
+	// Инициализация файла настроек
 	if err := initConfig(); err != nil {
 		log.Fatalf("error initialization config: %s", err.Error())
 	}
 
-	services := service.InitService()
+	// Подключение к базе данных
+	db, err := repository.OpenSqliteDB(&repository.Config{
+		Path: viper.GetString("sqlite.path"),
+	})
+	if err != nil {
+		log.Fatalf("error connecting to database: %s", err.Error())
+	}
+	defer db.Close()
+
+	// Запуск сервера
+	repos := repository.InitRepository(db)
+	services := service.InitService(repos)
 	handler := handler.InitHandler(services)
 	handler.InitRoutes()
 

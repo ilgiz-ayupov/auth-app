@@ -5,21 +5,25 @@ import (
 	"fmt"
 
 	"github.com/ilgiz-ayupov/auth-app"
+	"github.com/ilgiz-ayupov/auth-app/pkg/repository"
 )
 
 const salt = "qfcv123leivn94"
 
 type AuthService struct {
+	repo *repository.Repository
 }
 
-func InitAuthService() *AuthService {
-	return &AuthService{}
+func InitAuthService(repo *repository.Repository) *AuthService {
+	return &AuthService{
+		repo: repo,
+	}
 }
 
-func (s *AuthService) CreateUser(user auth.User) (int, error) {
+func (s *AuthService) CreateUser(user auth.User) (string, error) {
 	user.Password = generatePasswordHash(user.Password)
-	fmt.Println(user)
-	return 0, nil
+
+	return s.repo.CreateUser(user)
 }
 
 func generatePasswordHash(password string) string {

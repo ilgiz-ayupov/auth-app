@@ -1,2 +1,4 @@
 server:
   port: "8080"
+sqlite:
+  path: "db/database.sqlite"
