@@ -28,11 +28,10 @@ func main() {
 	// Запуск сервера
 	repos := repository.InitRepository(db)
 	services := service.InitService(repos)
-	handler := handler.InitHandler(services)
-	handler.InitRoutes()
+	handlers := handler.InitHandler(services)
 
 	server := new(auth.Server)
-	if err := server.Start(viper.GetInt("server.port")); err != nil {
+	if err := server.Start(viper.GetInt("server.port"), handlers.InitRoutes()); err != nil {
 		log.Fatalf("error starting server: %s", err.Error())
 	}
 }
