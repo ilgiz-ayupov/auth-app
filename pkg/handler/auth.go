@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -45,9 +44,60 @@ func (h *Handler) userRegister(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		token, err := h.services.GenerateJWTToken(user.Login, user.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		// Установка SESSTOKEN имеющий JWT токен
+		http.SetCookie(w, &http.Cookie{
+			Name:     "SESSTOKEN",
+			Value:    token,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			MaxAge:   86400,
+		})
 	}
 }
 
 func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Auth form")
+	switch req.Method {
+	case "GET":
+		template, err := template.ParseFiles("template/auth-form.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := template.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+	case "POST":
+		if err := req.ParseForm(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		login := req.Form.Get("login")
+		password := req.Form.Get("password")
+
+		token, err := h.services.GenerateJWTToken(login, password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		// Установка SESSTOKEN имеющий JWT токен
+		http.SetCookie(w, &http.Cookie{
+			Name:     "SESSTOKEN",
+			Value:    token,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			MaxAge:   86400,
+		})
+
+		// TODO: Перенаправление
+	}
 }
