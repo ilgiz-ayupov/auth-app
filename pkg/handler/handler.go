@@ -8,12 +8,16 @@ import (
 )
 
 type Handler struct {
-	services *service.Service
+	services    *service.Service
+	middlewares *Middleware
 }
 
-func InitHandler(services *service.Service) *Handler {
+func NewHandler(services *service.Service) *Handler {
+	middlewares := NewMiddleware()
+
 	return &Handler{
-		services: services,
+		services:    services,
+		middlewares: middlewares,
 	}
 }
 
@@ -23,5 +27,5 @@ func (h *Handler) InitRoutes() http.Handler {
 	mux.HandleFunc("/user/register", h.userRegister)
 	mux.HandleFunc("/user/auth", h.userAuth)
 
-	return alice.New(h.LoggerMiddleware).Then(mux)
+	return alice.New(h.middlewares.LoggerMiddleware).Then(mux)
 }

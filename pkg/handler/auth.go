@@ -1,103 +1,93 @@
 package handler
 
 import (
-	"html/template"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator"
 	"github.com/ilgiz-ayupov/auth-app"
 )
 
 func (h *Handler) userRegister(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
-	case "GET":
-		template, err := template.ParseFiles("template/register-form.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if err := template.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	case "POST":
+	case http.MethodGet:
+		sendResponseTemplate(w, "template/register-form.html")
+	case http.MethodPost:
 		if err := req.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		age, convErr := strconv.Atoi(req.Form.Get("age"))
-		if convErr != nil {
-			http.Error(w, convErr.Error(), http.StatusInternalServerError)
+		// Преобразование возраста в целое число
+		age, err := strconv.Atoi(req.PostFormValue("age"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
+		// Валидация данных
 		user := auth.User{
-			Login:    req.Form.Get("login"),
-			Password: req.Form.Get("password"),
-			Name:     req.Form.Get("name"),
+			Login:    req.PostFormValue("login"),
+			Password: req.PostFormValue("password"),
+			Name:     req.PostFormValue("name"),
 			Age:      age,
 		}
 
-		_, err := h.services.CreateUser(user)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		validate := validator.New()
+		if err := validate.Struct(user); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		token, err := h.services.GenerateJWTToken(user.Login, user.Password)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		// Создание пользователя
+		userId, createdErr := h.services.CreateUser(user)
+		if createdErr != nil {
+			http.Error(
+				w,
+				fmt.Sprintf("error creation user: %s", createdErr.Error()),
+				http.StatusInternalServerError,
+			)
+			return
 		}
 
-		// Установка SESSTOKEN имеющий JWT токен
-		http.SetCookie(w, &http.Cookie{
-			Name:     "SESSTOKEN",
-			Value:    token,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			MaxAge:   86400,
-		})
+		// Успешная регистрация
+		sendResponseHTTP(
+			w,
+			fmt.Sprintf("Успешная регистрация! Ваш ID в базе данных - %d.", userId),
+			http.StatusOK,
+		)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
 func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case "GET":
-		template, err := template.ParseFiles("template/auth-form.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if err := template.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-	case "POST":
-		if err := req.ParseForm(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		login := req.Form.Get("login")
-		password := req.Form.Get("password")
-
-		token, err := h.services.GenerateJWTToken(login, password)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		// Установка SESSTOKEN имеющий JWT токен
-		http.SetCookie(w, &http.Cookie{
-			Name:     "SESSTOKEN",
-			Value:    token,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			MaxAge:   86400,
-		})
-
-		// TODO: Перенаправление
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
+
+	// Чтение данных
+	var authFields auth.UserAuthFields
+
+	err := json.NewDecoder(req.Body).Decode(&authFields)
+	if err != nil {
+		sendErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// Создание JWT токена
+	token, err := h.services.GenerateJWTToken(authFields.Login, authFields.Password)
+	if err != nil {
+		sendErrorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	// успешная авторизация
+	response := map[string]interface{}{
+		"token": token,
+	}
+	sendResponseJSON(w, response, http.StatusOK)
 }

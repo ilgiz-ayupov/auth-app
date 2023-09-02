@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/sha1"
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ilgiz-ayupov/auth-app"
@@ -32,6 +31,7 @@ func (s *AuthService) CreateUser(user auth.User) (int64, error) {
 }
 
 func (s *AuthService) GenerateJWTToken(login string, password string) (string, error) {
+	password = generatePasswordHash(password)
 	id, err := s.repo.AuthentificationUser(login, password)
 	if err != nil {
 		return "", err
@@ -40,7 +40,6 @@ func (s *AuthService) GenerateJWTToken(login string, password string) (string, e
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"login": login,
 		"id":    id,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	return token.SignedString([]byte(signingKey))

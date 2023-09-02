@@ -1,9 +1,14 @@
 package auth
 
 type User struct {
-	Id       int    `json:"-" db:"id"`
-	Login    string `json:"login" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Name     string `json:"name" binding:"required"`
-	Age      int    `json:"age" binding:"required"`
+	Id       int    `json:"-"`
+	Login    string `json:"login" binding:"required" validate:"required,min=3,max=30"`
+	Password string `json:"password" binding:"required" validate:"required,min=8,max=16"`
+	Name     string `json:"name" binding:"required" validate:"required,min=3,max=30"`
+	Age      int    `json:"age" binding:"required" validate:"required,gte=0,lte=130"`
+}
+
+type UserAuthFields struct {
+	Login    string `json:"login" binding:"required" validate:"required,min=3,max=30"`
+	Password string `json:"password" binding:"required" validate:"required,min=8,max=16"`
 }

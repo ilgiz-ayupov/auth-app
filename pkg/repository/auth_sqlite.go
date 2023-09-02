@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -63,6 +64,10 @@ func (repo *AuthSqlite) AuthentificationUser(login string, password string) (int
 		if err := rows.Scan(&id); err != nil {
 			return 0, err
 		}
+	}
+
+	if id == 0 {
+		return 0, errors.New("error user not found")
 	}
 
 	return id, nil

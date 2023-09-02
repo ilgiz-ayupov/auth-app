@@ -15,7 +15,7 @@ type Repository struct {
 	Authorization
 }
 
-func InitRepository(db *sql.DB) *Repository {
+func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		Authorization: NewAuthSqlite(db),
 	}

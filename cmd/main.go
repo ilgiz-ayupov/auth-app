@@ -26,9 +26,9 @@ func main() {
 	defer db.Close()
 
 	// Запуск сервера
-	repos := repository.InitRepository(db)
-	services := service.InitService(repos)
-	handlers := handler.InitHandler(services)
+	repos := repository.NewRepository(db)
+	services := service.NewService(repos)
+	handlers := handler.NewHandler(services)
 
 	server := new(auth.Server)
 	if err := server.Start(viper.GetInt("server.port"), handlers.InitRoutes()); err != nil {
