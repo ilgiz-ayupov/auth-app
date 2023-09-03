@@ -72,3 +72,29 @@ func (repo *AuthSqlite) AuthentificationUser(login string, password string) (int
 
 	return id, nil
 }
+
+func (repo *AuthSqlite) AuthorizationToken(claims auth.UserTokenClaims) error {
+	var id int
+	ctx := context.Background()
+
+	db, err := repo.db.Conn(ctx)
+	if err != nil {
+		log.Fatalf("error connecting to database: %s", err.Error())
+	}
+
+	query := fmt.Sprintf("SELECT id FROM %s WHERE id=$1 AND login=$2", usersTable)
+	rows, err := db.QueryContext(ctx, query, claims.UserId, claims.Login)
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&id); err != nil {
+			return err
+		}
+	}
+
+	if id == 0 {
+		return errors.New("error user not found")
+	}
+
+	return nil
+}

@@ -9,16 +9,12 @@ import (
 )
 
 type Handler struct {
-	services    *service.Service
-	middlewares *Middleware
+	services *service.Service
 }
 
 func NewHandler(services *service.Service) *Handler {
-	middlewares := NewMiddleware()
-
 	return &Handler{
-		services:    services,
-		middlewares: middlewares,
+		services: services,
 	}
 }
 
@@ -28,7 +24,9 @@ func (h *Handler) InitRoutes() http.Handler {
 	router.HandleFunc("/user/register", h.userRegister)
 	router.HandleFunc("/user/auth", h.userAuth)
 
-	router.HandleFunc("/user/{name}", h.getUser)
+	router.HandleFunc("/user/{name}", h.getUser).Handler(
+		alice.New(h.AuthMiddleware).ThenFunc(h.getUser),
+	)
 
-	return alice.New(h.middlewares.LoggerMiddleware).Then(router)
+	return alice.New(h.LoggerMiddleware).Then(router)
 }

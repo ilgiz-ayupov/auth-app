@@ -2,9 +2,11 @@ package service
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
+	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/ilgiz-ayupov/auth-app"
 	"github.com/ilgiz-ayupov/auth-app/pkg/repository"
 )
@@ -16,6 +18,11 @@ const (
 
 type AuthService struct {
 	repo *repository.Repository
+}
+
+type tokenClaims struct {
+	jwt.StandardClaims
+	auth.UserTokenClaims
 }
 
 func NewAuthService(repo *repository.Repository) *AuthService {
@@ -37,12 +44,46 @@ func (s *AuthService) GenerateJWTToken(login string, password string) (string, e
 		return "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"login": login,
-		"id":    id,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(12 * time.Hour).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		auth.UserTokenClaims{
+			Login:  login,
+			UserId: id,
+		},
 	})
 
 	return token.SignedString([]byte(signingKey))
+}
+
+func (s *AuthService) ParseJWTToken(token string) (auth.UserTokenClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid signing method")
+		}
+
+		return []byte(signingKey), nil
+	})
+
+	if err != nil {
+		return auth.UserTokenClaims{}, err
+	}
+
+	claims, ok := parsedToken.Claims.(*tokenClaims)
+	if !ok {
+		return auth.UserTokenClaims{}, errors.New("token claims are not of type *tokenClaims")
+	}
+
+	return auth.UserTokenClaims{
+		Login:  claims.Login,
+		UserId: claims.UserId,
+	}, nil
+}
+
+func (s *AuthService) AuthorizationToken(claims auth.UserTokenClaims) error {
+	return s.repo.AuthorizationToken(claims)
 }
 
 func generatePasswordHash(password string) string {

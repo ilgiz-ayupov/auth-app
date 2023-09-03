@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/ilgiz-ayupov/auth-app"
@@ -87,6 +88,14 @@ func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// успешная авторизация
+	http.SetCookie(w, &http.Cookie{
+		Name:     "SESSTOKEN",
+		Value:    token,
+		Expires:  time.Now().Add(1 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+	})
+
 	response := map[string]interface{}{
 		"token": token,
 	}

@@ -18,3 +18,8 @@ type UserProfile struct {
 	Name string `json:"name" binding:"required" validate:"required,min=3,max=30"`
 	Age  int    `json:"age" binding:"required" validate:"required,gte=0,lte=130"`
 }
+
+type UserTokenClaims struct {
+	Login  string `json:"login"`
+	UserId int    `json:"user_id"`
+}

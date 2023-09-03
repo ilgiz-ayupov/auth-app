@@ -8,6 +8,8 @@ import (
 type Authorization interface {
 	CreateUser(user auth.User) (int64, error)
 	GenerateJWTToken(login string, password string) (string, error)
+	ParseJWTToken(token string) (auth.UserTokenClaims, error)
+	AuthorizationToken(claims auth.UserTokenClaims) error
 }
 
 type Profile interface {

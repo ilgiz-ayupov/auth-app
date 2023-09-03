@@ -9,6 +9,7 @@ import (
 type Authorization interface {
 	CreateUser(user auth.User) (int64, error)
 	AuthentificationUser(login string, password string) (int, error)
+	AuthorizationToken(claims auth.UserTokenClaims) error
 }
 
 type Profile interface {
