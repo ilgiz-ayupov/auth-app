@@ -1,15 +1,11 @@
 package repository
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ilgiz-ayupov/auth-app"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type AuthSqlite struct {
@@ -23,15 +19,13 @@ func NewAuthSqlite(db *sql.DB) *AuthSqlite {
 }
 
 func (repo *AuthSqlite) CreateUser(user auth.User) (int64, error) {
-	ctx := context.Background()
-
-	db, err := repo.db.Conn(ctx)
+	conn, ctx, err := ConnSqliteDB(repo.db)
 	if err != nil {
-		log.Fatalf("error connecting to database: %s", err.Error())
+		return 0, err
 	}
 
 	query := fmt.Sprintf("INSERT INTO users (login, password, name, age) VALUES ($1, $2, $3, $4)")
-	result, err := db.ExecContext(ctx, query, user.Login, user.Password, user.Name, user.Age)
+	result, err := conn.ExecContext(ctx, query, user.Login, user.Password, user.Name, user.Age)
 	if err != nil {
 		return 0, err
 	}
@@ -45,21 +39,19 @@ func (repo *AuthSqlite) CreateUser(user auth.User) (int64, error) {
 }
 
 func (repo *AuthSqlite) AuthentificationUser(login string, password string) (int, error) {
-	var id int
-	ctx := context.Background()
-
-	db, err := repo.db.Conn(ctx)
+	conn, ctx, err := ConnSqliteDB(repo.db)
 	if err != nil {
-		log.Fatalf("error connecting to database: %s", err.Error())
+		return 0, err
 	}
 
 	query := fmt.Sprintf("SELECT id FROM %s WHERE login=$1 AND password=$2", usersTable)
-	rows, err := db.QueryContext(ctx, query, login, password)
+	rows, err := conn.QueryContext(ctx, query, login, password)
 	if err != nil {
-		log.Fatalf("error getting data from database: %s", err.Error())
+		return 0, err
 	}
 	defer rows.Close()
 
+	var id int
 	for rows.Next() {
 		if err := rows.Scan(&id); err != nil {
 			return 0, err
@@ -74,18 +66,16 @@ func (repo *AuthSqlite) AuthentificationUser(login string, password string) (int
 }
 
 func (repo *AuthSqlite) AuthorizationToken(claims auth.UserTokenClaims) error {
-	var id int
-	ctx := context.Background()
-
-	db, err := repo.db.Conn(ctx)
+	conn, ctx, err := ConnSqliteDB(repo.db)
 	if err != nil {
-		log.Fatalf("error connecting to database: %s", err.Error())
+		return err
 	}
 
 	query := fmt.Sprintf("SELECT id FROM %s WHERE id=$1 AND login=$2", usersTable)
-	rows, err := db.QueryContext(ctx, query, claims.UserId, claims.Login)
+	rows, err := conn.QueryContext(ctx, query, claims.UserId, claims.Login)
 	defer rows.Close()
 
+	var id int
 	for rows.Next() {
 		if err := rows.Scan(&id); err != nil {
 			return err

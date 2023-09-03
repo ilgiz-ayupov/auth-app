@@ -2,8 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,81 +11,63 @@ import (
 )
 
 func (h *Handler) userRegister(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodGet:
-		sendResponseTemplate(w, "template/register-form.html")
-	case http.MethodPost:
-		if err := req.ParseForm(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Преобразование возраста в целое число
-		age, err := strconv.Atoi(req.PostFormValue("age"))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Валидация данных
-		user := auth.User{
-			Login:    req.PostFormValue("login"),
-			Password: req.PostFormValue("password"),
-			Name:     req.PostFormValue("name"),
-			Age:      age,
-		}
-
-		validate := validator.New()
-		if err := validate.Struct(user); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Создание пользователя
-		userId, createdErr := h.services.CreateUser(user)
-		if createdErr != nil {
-			http.Error(
-				w,
-				fmt.Sprintf("error creation user: %s", createdErr.Error()),
-				http.StatusInternalServerError,
-			)
-			return
-		}
-
-		// Успешная регистрация
-		sendResponseHTTP(
-			w,
-			fmt.Sprintf("Успешная регистрация! Ваш ID в базе данных - %d.", userId),
-			http.StatusOK,
-		)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		sendErrorJSON(w, errors.New("Method not allowed"), http.StatusMethodNotAllowed)
+	if req.Method != "POST" {
+		sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Чтение данных
+	if err := req.ParseForm(); err != nil {
+		sendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	age, err := strconv.Atoi(req.PostFormValue("age"))
+	if err != nil {
+		sendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user := auth.User{
+		Login:    req.PostFormValue("login"),
+		Password: req.PostFormValue("password"),
+		Name:     req.PostFormValue("name"),
+		Age:      age,
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(user); err != nil {
+		sendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := h.services.CreateUser(user); err != nil {
+		sendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendMessage(w, "Успешная регистрация", http.StatusOK)
+}
+
+func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	var authFields auth.UserAuthFields
 
 	err := json.NewDecoder(req.Body).Decode(&authFields)
 	if err != nil {
-		sendErrorJSON(w, err, http.StatusBadRequest)
+		sendError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Создание JWT токена
 	token, err := h.services.GenerateJWTToken(authFields.Login, authFields.Password)
 	if err != nil {
-		sendErrorJSON(w, err, http.StatusUnauthorized)
+		sendError(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	// успешная авторизация
 	http.SetCookie(w, &http.Cookie{
 		Name:     "SESSTOKEN",
 		Value:    token,
@@ -96,8 +76,5 @@ func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
 		Secure:   true,
 	})
 
-	response := map[string]interface{}{
-		"token": token,
-	}
-	sendResponseJSON(w, response, http.StatusOK)
+	sendMessage(w, "Успешная авторизация", http.StatusOK)
 }

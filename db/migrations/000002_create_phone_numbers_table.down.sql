@@ -1,1 +1,1 @@
-DROP TABLE phone_numbers;
+DROP TABLE IF EXISTS phone_numbers;

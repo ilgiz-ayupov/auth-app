@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ilgiz-ayupov/auth-app/pkg/service"
-	"github.com/justinas/alice"
 )
 
 type Handler struct {
@@ -20,16 +19,17 @@ func NewHandler(services *service.Service) *Handler {
 
 func (h *Handler) InitRoutes() http.Handler {
 	router := mux.NewRouter()
+	router.Use(h.LoggerMiddleware)
 
-	router.HandleFunc("/user/register", h.userRegister)
-	router.HandleFunc("/user/auth", h.userAuth)
+	router.HandleFunc("/user/register", h.userRegister).Methods("POST")
+	router.HandleFunc("/user/auth", h.userAuth).Methods("POST")
 
-	router.HandleFunc("/user/phone", h.addPhoneNumber).Handler(
-		alice.New(h.AuthMiddleware).ThenFunc(h.addPhoneNumber),
-	)
-	router.HandleFunc("/user/{name}", h.getUser).Handler(
-		alice.New(h.AuthMiddleware).ThenFunc(h.getUser),
-	)
+	authenticatedRouter := router.PathPrefix("/").Subrouter()
+	authenticatedRouter.Use(h.AuthMiddleware)
 
-	return alice.New(h.LoggerMiddleware).Then(router)
+	authenticatedRouter.HandleFunc("/user/phone", h.phoneNumberHandlers).Methods("GET", "POST", "PUT")
+	authenticatedRouter.HandleFunc("/user/phone/{phoneId}", h.deletePhoneNumber)
+	authenticatedRouter.HandleFunc("/user/{name}", h.getUser).Methods("GET")
+
+	return router
 }

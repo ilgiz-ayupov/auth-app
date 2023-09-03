@@ -2,42 +2,38 @@ package handler
 
 import (
 	"encoding/json"
-	"html/template"
 	"net/http"
 )
 
-type errorJSONResponse struct {
-	Error string `json:"error"`
+type errorResponse struct {
+	Error      string `json:"error"`
+	StatusCode int    `json:"statusCode"`
 }
 
-func sendResponseTemplate(w http.ResponseWriter, templatePath string) {
-	template, err := template.ParseFiles(templatePath)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := template.Execute(w, nil); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+type messageResponse struct {
+	Message    string `json:"message"`
+	StatusCode int    `json:"statusCode"`
 }
 
-func sendResponseJSON(w http.ResponseWriter, response any, statusCode int) {
+func sendResponse(w http.ResponseWriter, response any, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
 	json.NewEncoder(w).Encode(response)
 }
 
-func sendResponseHTTP(w http.ResponseWriter, message string, statusCode int) {
+func sendError(w http.ResponseWriter, err string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	w.Write([]byte(message))
+	error := errorResponse{Error: err, StatusCode: statusCode}
+	json.NewEncoder(w).Encode(error)
 }
 
-func sendErrorJSON(w http.ResponseWriter, err error, statusCode int) {
+func sendMessage(w http.ResponseWriter, msg string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	error := errorJSONResponse{Error: err.Error()}
-	json.NewEncoder(w).Encode(error)
+	message := messageResponse{Message: msg, StatusCode: statusCode}
+	json.NewEncoder(w).Encode(message)
 }

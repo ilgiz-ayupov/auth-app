@@ -19,6 +19,18 @@ func (s *ProfileService) GetUser(name string) (auth.UserProfile, error) {
 	return s.repo.GetUser(name)
 }
 
-func (s *ProfileService) AddPhoneNumber(phoneNumber auth.PhoneNumber) (int64, error) {
-	return s.repo.AddPhoneNumber(phoneNumber)
+func (s *ProfileService) AddPhoneNumber(phoneNum auth.PhoneNumber) (int64, error) {
+	return s.repo.AddPhoneNumber(phoneNum)
+}
+
+func (s *ProfileService) SearchPhoneNumber(phone string) (auth.PhoneNumber, error) {
+	return s.repo.SearchPhoneNumber(phone)
+}
+
+func (s *ProfileService) UpdatePhoneNumber(updating auth.UpdatingPhoneNumber) error {
+	return s.repo.UpdatePhoneNumber(updating)
+}
+
+func (s *ProfileService) DeletePhoneNumber(id int) error {
+	return s.repo.DeletePhoneNumber(id)
 }

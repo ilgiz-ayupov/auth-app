@@ -14,7 +14,10 @@ type Authorization interface {
 
 type Profile interface {
 	GetUser(name string) (auth.UserProfile, error)
-	AddPhoneNumber(phoneNumber auth.PhoneNumber) (int64, error)
+	AddPhoneNumber(phoneNum auth.PhoneNumber) (int64, error)
+	SearchPhoneNumber(phone string) (auth.PhoneNumber, error)
+	UpdatePhoneNumber(updating auth.UpdatingPhoneNumber) error
+	DeletePhoneNumber(id int) error
 }
 
 type Repository struct {

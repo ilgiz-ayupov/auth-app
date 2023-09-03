@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -30,6 +31,17 @@ func OpenSqliteDB(cfg *Config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func ConnSqliteDB(db *sql.DB) (*sql.Conn, context.Context, error) {
+	ctx := context.Background()
+
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn, ctx, nil
 }
 
 func acceptMigrations(db *sql.DB) error {

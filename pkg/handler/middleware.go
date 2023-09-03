@@ -16,13 +16,13 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie("SESSTOKEN")
 		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			sendError(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		userTokenClaims, err := h.services.ParseJWTToken(cookie.Value)
 		if err := h.services.AuthorizationToken(userTokenClaims); err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			sendError(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
