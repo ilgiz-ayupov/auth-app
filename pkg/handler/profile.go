@@ -49,13 +49,13 @@ func (h *Handler) searchPhoneNumber(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	phoneNum := req.FormValue("q")
-	if len(phoneNum) == 0 {
+	phone := req.FormValue("q")
+	if len(phone) == 0 {
 		sendError(w, "'q' parameter is missing", http.StatusBadRequest)
 		return
 	}
 
-	phoneNumber, err := h.services.SearchPhoneNumber(phoneNum)
+	phoneNumber, err := h.services.SearchPhoneNumbers(phone)
 	if err != nil {
 		sendError(w, err.Error(), http.StatusNotFound)
 		return

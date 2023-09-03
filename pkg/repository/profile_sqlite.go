@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ilgiz-ayupov/auth-app"
 )
@@ -42,30 +41,34 @@ func (repo *ProfileSqlite) GetUser(name string) (auth.UserProfile, error) {
 	return user, nil
 }
 
-func (repo *ProfileSqlite) SearchPhoneNumber(phone string) (auth.PhoneNumber, error) {
+func (repo *ProfileSqlite) SearchPhoneNumbers(phone string) ([]auth.PhoneNumber, error) {
 	conn, ctx, err := ConnSqliteDB(repo.db)
 	if err != nil {
-		return auth.PhoneNumber{}, err
+		return []auth.PhoneNumber{}, err
 	}
 
-	query := fmt.Sprintf("SELECT id, user_id, phone, description, is_fax FROM %s WHERE phone=$1", phoneNumbersTable)
-	rows, err := conn.QueryContext(ctx, query, phone)
+	query := fmt.Sprintf("SELECT id, user_id, phone, description, is_fax FROM %s WHERE phone LIKE $1", phoneNumbersTable)
+	rows, err := conn.QueryContext(ctx, query, "%"+phone+"%")
 	if err != nil {
-		log.Fatalf("error getting data from database: %s", err.Error())
+		return nil, err
 	}
 	defer rows.Close()
 
-	var phoneNum auth.PhoneNumber
+	var phoneNums []auth.PhoneNumber
 	for rows.Next() {
+
+		var phoneNum auth.PhoneNumber
 		if err := rows.Scan(&phoneNum.Id, &phoneNum.UserId, &phoneNum.Phone, &phoneNum.Description, &phoneNum.IsFax); err != nil {
-			return auth.PhoneNumber{}, err
+			return []auth.PhoneNumber{}, err
 		}
+
+		phoneNums = append(phoneNums, phoneNum)
 	}
 
-	if phoneNum.Id == 0 {
-		return auth.PhoneNumber{}, errors.New("phone number is not found")
+	if len(phoneNums) == 0 {
+		return []auth.PhoneNumber{}, errors.New("phone number is not found")
 	}
-	return phoneNum, nil
+	return phoneNums, nil
 }
 
 func (repo *ProfileSqlite) AddPhoneNumber(phoneNum auth.PhoneNumber) (int64, error) {

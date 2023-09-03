@@ -23,8 +23,8 @@ func (s *ProfileService) AddPhoneNumber(phoneNum auth.PhoneNumber) (int64, error
 	return s.repo.AddPhoneNumber(phoneNum)
 }
 
-func (s *ProfileService) SearchPhoneNumber(phone string) (auth.PhoneNumber, error) {
-	return s.repo.SearchPhoneNumber(phone)
+func (s *ProfileService) SearchPhoneNumbers(phone string) ([]auth.PhoneNumber, error) {
+	return s.repo.SearchPhoneNumbers(phone)
 }
 
 func (s *ProfileService) UpdatePhoneNumber(updating auth.UpdatingPhoneNumber) error {
