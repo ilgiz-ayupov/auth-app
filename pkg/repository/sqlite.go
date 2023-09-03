@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	usersTable = "users"
+	usersTable        = "users"
+	phoneNumbersTable = "phone_numbers"
 )
 
 type Config struct {

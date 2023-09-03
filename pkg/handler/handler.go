@@ -24,6 +24,9 @@ func (h *Handler) InitRoutes() http.Handler {
 	router.HandleFunc("/user/register", h.userRegister)
 	router.HandleFunc("/user/auth", h.userAuth)
 
+	router.HandleFunc("/user/phone", h.addPhoneNumber).Handler(
+		alice.New(h.AuthMiddleware).ThenFunc(h.addPhoneNumber),
+	)
 	router.HandleFunc("/user/{name}", h.getUser).Handler(
 		alice.New(h.AuthMiddleware).ThenFunc(h.getUser),
 	)

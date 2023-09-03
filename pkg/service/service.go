@@ -14,6 +14,7 @@ type Authorization interface {
 
 type Profile interface {
 	GetUser(name string) (auth.UserProfile, error)
+	AddPhoneNumber(phoneNumber auth.PhoneNumber) (int64, error)
 }
 
 type Service struct {

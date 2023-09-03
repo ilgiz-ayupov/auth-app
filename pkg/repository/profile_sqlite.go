@@ -20,8 +20,6 @@ func NewProfileSqlite(db *sql.DB) *ProfileSqlite {
 }
 
 func (repo *ProfileSqlite) GetUser(name string) (auth.UserProfile, error) {
-	log.Println(name)
-
 	ctx := context.Background()
 	var user auth.UserProfile
 
@@ -44,4 +42,26 @@ func (repo *ProfileSqlite) GetUser(name string) (auth.UserProfile, error) {
 	}
 
 	return user, nil
+}
+
+func (repo *ProfileSqlite) AddPhoneNumber(phoneNumber auth.PhoneNumber) (int64, error) {
+	ctx := context.Background()
+
+	db, err := repo.db.Conn(ctx)
+	if err != nil {
+		log.Fatalf("error connecting to database: %s", err.Error())
+	}
+
+	query := fmt.Sprintf("INSERT INTO %s (user_id, phone, description, is_fax) VALUES ($1, $2, $3, $4)", phoneNumbersTable)
+	result, err := db.ExecContext(ctx, query, phoneNumber.UserId, phoneNumber.Phone, phoneNumber.Description, phoneNumber.IsFax)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
