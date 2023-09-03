@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/ilgiz-ayupov/auth-app/pkg/service"
 	"github.com/justinas/alice"
 )
@@ -22,10 +23,12 @@ func NewHandler(services *service.Service) *Handler {
 }
 
 func (h *Handler) InitRoutes() http.Handler {
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
-	mux.HandleFunc("/user/register", h.userRegister)
-	mux.HandleFunc("/user/auth", h.userAuth)
+	router.HandleFunc("/user/register", h.userRegister)
+	router.HandleFunc("/user/auth", h.userAuth)
 
-	return alice.New(h.middlewares.LoggerMiddleware).Then(mux)
+	router.HandleFunc("/user/{name}", h.getUser)
+
+	return alice.New(h.middlewares.LoggerMiddleware).Then(router)
 }

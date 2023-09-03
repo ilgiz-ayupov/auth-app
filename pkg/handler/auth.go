@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -65,7 +66,7 @@ func (h *Handler) userRegister(w http.ResponseWriter, req *http.Request) {
 
 func (h *Handler) userAuth(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		sendErrorJSON(w, errors.New("Method not allowed"), http.StatusMethodNotAllowed)
 		return
 	}
 

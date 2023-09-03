@@ -11,12 +11,18 @@ type Authorization interface {
 	AuthentificationUser(login string, password string) (int, error)
 }
 
+type Profile interface {
+	GetUser(name string) (auth.UserProfile, error)
+}
+
 type Repository struct {
 	Authorization
+	Profile
 }
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		Authorization: NewAuthSqlite(db),
+		Profile:       NewProfileSqlite(db),
 	}
 }

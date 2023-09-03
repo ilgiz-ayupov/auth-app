@@ -10,12 +10,18 @@ type Authorization interface {
 	GenerateJWTToken(login string, password string) (string, error)
 }
 
+type Profile interface {
+	GetUser(name string) (auth.UserProfile, error)
+}
+
 type Service struct {
 	Authorization
+	Profile
 }
 
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		Authorization: InitAuthService(repos),
+		Authorization: NewAuthService(repos),
+		Profile:       NewProfileService(repos),
 	}
 }
