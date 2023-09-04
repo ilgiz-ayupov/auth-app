@@ -86,18 +86,10 @@
 - PUT /user/phone - Изменить номер телефона - Принимает JSON данные.
   ```JSON
   {
-      "phone_id": 1,
+      "id": 1,
       "phone": "998901234567",
       "description": "Description",
       "is_fax": false
   }
   ```
 - DELETE /user/phone/:id - Удалить номер телефона
-  ```JSON
-  {
-      "phone_id": 1,
-      "phone": "998901234567",
-      "description": "Description",
-      "is_fax": false
-  }
-  ```

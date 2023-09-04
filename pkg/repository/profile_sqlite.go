@@ -111,6 +111,10 @@ func (repo *ProfileSqlite) UpdatePhoneNumber(updating auth.UpdatingPhoneNumber) 
 		}
 	}
 
+	if phoneNum.Id == 0 {
+		return errors.New("phone number not found")
+	}
+
 	if phoneNum.UserId != updating.UserId {
 		query := fmt.Sprintf("UPDATE %s SET user_id=$1 WHERE id=$2", phoneNumbersTable)
 
